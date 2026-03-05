@@ -34,7 +34,6 @@ declare -A CURRID_BY_CID=()
 declare -A COMPOSE_DIR_BY_CID=()
 declare -A COMPOSE_SVC_BY_CID=()
 
-
 for cid in "${CIDS[@]}"; do
   NAME_BY_CID["$cid"]="$(docker inspect "$cid" --format '{{.Name}}' | sed 's#^/##')"
   STATE_BY_CID["$cid"]="$(docker inspect "$cid" --format '{{.State.Status}}')"
@@ -96,8 +95,8 @@ done
 
 echo
 echo "=== Result per container ==="
-printf "%-22s %-10s %-28s %-8s\n" "NAME" "STATE" "IMAGE(ref)" "UPDATE?"
-echo "-------------------------------------------------------------------------------------------"
+printf "%-22s %-10s %-28s %-16s %-45s %-18s\n" "NAME" "STATE" "IMAGE(ref)" "UPDATE?" "COMPOSE_DIR" "SERVICE"
+echo "-------------------------------------------------------------------------------------------------------------------------------"
 
 updates=0
 unknown=0
@@ -115,7 +114,13 @@ for cid in "${CIDS[@]}"; do
   curr="${CURRID_BY_CID[$cid]}"
   latest="${LATEST_ID[$ref]:-}"
 
+  # Compose metadata (falls Container via docker compose erstellt wurde)
+  COMPOSE_DIR_BY_CID["$cid"]="$(docker inspect "$cid" --format '{{ index .Config.Labels "com.docker.compose.project.working_dir" }}' 2>/dev/null || true)"
+  COMPOSE_SVC_BY_CID["$cid"]="$(docker inspect "$cid" --format '{{ index .Config.Labels "com.docker.compose.service" }}' 2>/dev/null || true)"
+done
+
   if [[ "${PULL_RES[$ref]:-fail}" != "ok" || -z "$latest" ]]; then
+
     verdict="unknown"
     unknown=$((unknown+1))
   else
@@ -128,7 +133,7 @@ for cid in "${CIDS[@]}"; do
   fi
 
 # erst die festen Spalten
-printf "%-22s %-10s %-28s " "${name:0:22}" "${state:0:10}" "${ref:0:28}"
+printf "%-22s %-10s %-28s %-8s\n" "${name:0:22}" "${state:0:10}" "${ref:0:28}" "Aktuell/Update verfügbar"
 
 # dann verdict farbig (und sauber interpretiert)
 case "$verdict" in
