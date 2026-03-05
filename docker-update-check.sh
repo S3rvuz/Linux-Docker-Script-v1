@@ -61,6 +61,8 @@ idx=0
 
 for ref in "${!UNIQUE[@]}"; do
   idx=$((idx+1))
+    [[ -z "$ref" ]] && { echo "($idx/$total) <EMPTY REF> -> skip"; continue; }
+
 
   # run pull in background so spinner can animate
   tmp_out="$(mktemp)"
@@ -77,8 +79,7 @@ for ref in "${!UNIQUE[@]}"; do
     # pull finished (success or at least produced normal output)
     if grep -qi "Downloaded newer image" "$tmp_out"; then
       PULL_RES["$ref"]="ok"
-      LATEST_ID["$ref"]="$(docker image inspect "$ref" --format '{{.Id}}' 2>/dev/null || true)"
-      echo "($idx/$total) $ref  -> ok (newer downloaded)"
+LATEST_ID["$ref"]="$(docker image inspect "$ref" --format '{{.Id}}' 2>/dev/null || echo "")"      echo "($idx/$total) $ref  -> ok (newer downloaded)"
     else
       # could be "Image is up to date" or normal status lines
       PULL_RES["$ref"]="ok"
@@ -96,9 +97,6 @@ for ref in "${!UNIQUE[@]}"; do
 
   rm -f "$tmp_out"
 done
-
-updates=0
-unknown=0
 
 echo
 echo "=== Result per container ==="
