@@ -142,7 +142,7 @@ for cid in "${CIDS[@]}"; do
     if [[ "$curr" == "$latest" ]]; then
       verdict_text="Aktuell"
     else
-      verdict_text="Update verfügbar"
+      verdict_text="Update"
       updates=$((updates+1))
     fi
   fi
@@ -177,3 +177,8 @@ done
 
 echo
 echo "Summary: update needed=$updates | unknown=$unknown"
+echo 
+echo "Zum updaten -> cd COMPOSE_DIR
+docker compose pull
+docker compose up -d
+docker compose ps
