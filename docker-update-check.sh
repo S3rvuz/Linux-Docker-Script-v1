@@ -40,6 +40,9 @@ for cid in "${CIDS[@]}"; do
   STATE_BY_CID["$cid"]="$(docker inspect "$cid" --format '{{.State.Status}}')"
   REF_BY_CID["$cid"]="$(docker inspect "$cid" --format '{{.Config.Image}}')"   # desired repo:tag
   CURRID_BY_CID["$cid"]="$(docker inspect "$cid" --format '{{.Image}}')"      # current image id
+    # Compose metadata (falls Container via docker compose erstellt wurde)
+  COMPOSE_DIR_BY_CID["$cid"]="$(docker inspect "$cid" --format '{{ index .Config.Labels "com.docker.compose.project.working_dir" }}' 2>/dev/null || true)"
+  COMPOSE_SVC_BY_CID["$cid"]="$(docker inspect "$cid" --format '{{ index .Config.Labels "com.docker.compose.service" }}' 2>/dev/null || true)"
 done
 
 declare -A UNIQUE=()
