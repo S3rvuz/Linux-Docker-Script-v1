@@ -97,10 +97,33 @@ for ref in "${!UNIQUE[@]}"; do
   rm -f "$tmp_out"
 done
 
+updates=0
+unknown=0
+
 echo
-echo "=== Result per container (short table) ==="
-printf "%-22s %-9s %-28s %-16s\n" "NAME" "STATE" "IMAGE(ref)" "UPDATE?"
-echo "--------------------------------------------------------------------------"
+echo "=== Result per container ==="
+
+# Terminalbreite (Fallback 148)
+COLS="$(tput cols 2>/dev/null || echo 148)"
+
+# Spaltenbreiten (für ~148 cols)
+W_NAME=20
+W_STATE=8
+W_IMAGE=30
+W_UPD=16
+W_SVC=12
+
+# Rest geht an PATH (mind. 30)
+W_PATH=$(( COLS - (W_NAME + 1) - (W_STATE + 1) - (W_IMAGE + 1) - (W_UPD + 1) - (W_SVC + 1) ))
+(( W_PATH < 30 )) && W_PATH=30
+
+printf "%-${W_NAME}s %-${W_STATE}s %-${W_IMAGE}s %-${W_UPD}s %-${W_PATH}s %-${W_SVC}s\n" \
+  "NAME" "STATE" "IMAGE(ref)" "UPDATE?" "COMPOSE_DIR" "SERVICE"
+
+printf "%*s\n" "$COLS" "" | tr ' ' '-'
+
+updates=0
+unknown=0
 
 for cid in "${CIDS[@]}"; do
   name="${NAME_BY_CID[$cid]}"
@@ -108,39 +131,29 @@ for cid in "${CIDS[@]}"; do
   ref="${REF_BY_CID[$cid]}"
   curr="${CURRID_BY_CID[$cid]}"
   latest="${LATEST_ID[$ref]:-}"
+  cdir="${COMPOSE_DIR_BY_CID[$cid]:-}"
+  csvc="${COMPOSE_SVC_BY_CID[$cid]:-}"
+
+  [[ -z "$cdir" ]] && cdir="-"
+  [[ -z "$csvc" ]] && csvc="-"
 
   if [[ "${PULL_RES[$ref]:-fail}" != "ok" || -z "$latest" ]]; then
-    verdict="unknown"
+    verdict_text="Unbekannt"
     unknown=$((unknown+1))
   else
     if [[ "$curr" == "$latest" ]]; then
-      verdict="no"
+      verdict_text="Aktuell"
     else
-      verdict="update"
+      verdict_text="Update verfügbar"
       updates=$((updates+1))
     fi
   fi
 
-  case "$verdict" in
-    no)      verdict_text="Aktuell" ;;
-    update)  verdict_text="Update verfügbar" ;;
-    unknown) verdict_text="Unbekannt" ;;
-    fail)    verdict_text="Fehler" ;;
-    *)       verdict_text="$verdict" ;;
-  esac
+  printf "%-${W_NAME}.${W_NAME}s %-${W_STATE}.${W_STATE}s %-${W_IMAGE}.${W_IMAGE}s %-${W_UPD}.${W_UPD}s %-${W_PATH}.${W_PATH}s %-${W_SVC}.${W_SVC}s\n" \
+    "$name" "$state" "$ref" "$verdict_text" "$cdir" "$csvc"
+done
 
-  printf "%-22s %-9s %-28s %-16s\n" "${name:0:22}" "${state:0:9}" "${ref:0:28}" "${verdict_text:0:16}"
-done
-echo
-echo "=== Compose map (full paths) ==="
-echo "NAME -> COMPOSE_DIR | SERVICE"
-echo "--------------------------------------------------------------------------"
-for cid in "${CIDS[@]}"; do
-  cdir="${COMPOSE_DIR_BY_CID[$cid]:-}"
-  csvc="${COMPOSE_SVC_BY_CID[$cid]:-}"
-  [[ -z "$cdir" || -z "$csvc" ]] && continue
-  echo "${NAME_BY_CID[$cid]} -> $cdir | $csvc"
-done
+
 echo
 echo "=== Containers that should be updated (recreate) ==="
 shown=0
