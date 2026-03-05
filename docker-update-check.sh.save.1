@@ -117,13 +117,7 @@ for cid in "${CIDS[@]}"; do
   ref="${REF_BY_CID[$cid]}"
   curr="${CURRID_BY_CID[$cid]}"
   latest="${LATEST_ID[$ref]:-}"
-  cdir="${COMPOSE_DIR_BY_CID[$cid]}"
-  csvc="${COMPOSE_SVC_BY_CID[$cid]}"
-
-  [[ -z "$cdir" ]] && cdir="-"
-  [[ -z "$csvc" ]] && csvc="-"
-
-
+  
   if [[ "${PULL_RES[$ref]:-fail}" != "ok" || -z "$latest" ]]; then
     verdict="unknown"
     unknown=$((unknown+1))
