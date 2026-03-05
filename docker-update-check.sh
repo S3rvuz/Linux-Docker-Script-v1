@@ -137,8 +137,8 @@ for cid in "${CIDS[@]}"; do
   fi
 
 # erst die festen Spalten
-printf "%-22s %-10s %-28s " "${name:0:22}" "${state:0:10}" "${ref:0:28}"
-
+  printf "%-22s %-10s %-28s %-16s %-45s %-18s\n" \
+    "${name:0:22}" "${state:0:10}" "${ref:0:28}" "$status_text" "${cdir:0:45}" "${csvc:0:18}"
 # dann verdict farbig (und sauber interpretiert)
 case "$verdict" in
   no)      printf "%b\n" "${GREEN}Aktuell${RESET}" ;;
@@ -151,14 +151,14 @@ esac
 done
 
 echo
-echo "=== Containers that should be updated (recreate) ==="
-shown=0
-for cid in "${CIDS[@]}"; do
-  ref="${REF_BY_CID[$cid]}"
-  curr="${CURRID_BY_CID[$cid]}"
-  latest="${LATEST_ID[$ref]:-}"
-  [[ -n "$latest" && "$curr" != "$latest" ]] || continue
-  echo "- ${NAME_BY_CID[$cid]}  (image: $ref)"
+cdir="${COMPOSE_DIR_BY_CID[$cid]}"
+csvc="${COMPOSE_SVC_BY_CID[$cid]}"
+
+if [[ -n "$cdir" && -n "$csvc" ]]; then
+  echo "- ${NAME_BY_CID[$cid]}  (image: $ref)  -> cd \"$cdir\" && docker compose up -d $csvc"
+else
+  echo "- ${NAME_BY_CID[$cid]}  (image: $ref)  -> (kein Compose-Path/Service gefunden)"
+fi
   shown=1
 done
 [[ $shown -eq 0 ]] && echo "Keine."
