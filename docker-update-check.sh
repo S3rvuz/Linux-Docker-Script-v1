@@ -178,7 +178,7 @@ done
 echo
 echo "Summary: update needed=$updates | unknown=$unknown"
 echo 
-echo "Zum updaten -> cd COMPOSE_DIR
-docker compose pull
-docker compose up -d
-docker compose ps
+echo "Zum updaten -> cd COMPOSE_DIR"
+echo "docker compose pull"
+echo "docker compose up -d"
+echo "docker compose ps"
