@@ -98,6 +98,7 @@ for ref in "${!UNIQUE[@]}"; do
 done
 
 echo
+echo
 echo "=== Result per container ==="
 printf "%-22s %-10s %-28s %-16s %-45s %-18s\n" "NAME" "STATE" "IMAGE(ref)" "UPDATE?" "COMPOSE_DIR" "SERVICE"
 echo "-------------------------------------------------------------------------------------------------------------------------------"
@@ -111,18 +112,18 @@ YELLOW=$'\e[33m'
 GRAY=$'\e[90m'
 RESET=$'\e[0m'
 
+# Ergebnis-Tabelle
 for cid in "${CIDS[@]}"; do
   name="${NAME_BY_CID[$cid]}"
   state="${STATE_BY_CID[$cid]}"
   ref="${REF_BY_CID[$cid]}"
   curr="${CURRID_BY_CID[$cid]}"
   latest="${LATEST_ID[$ref]:-}"
-  cdir="${COMPOSE_DIR_BY_CID[$cid]}"
-  csvc="${COMPOSE_SVC_BY_CID[$cid]}"
+  cdir="${COMPOSE_DIR_BY_CID[$cid]:-}"
+  csvc="${COMPOSE_SVC_BY_CID[$cid]:-}"
 
   [[ -z "$cdir" ]] && cdir="-"
   [[ -z "$csvc" ]] && csvc="-"
-
 
   if [[ "${PULL_RES[$ref]:-fail}" != "ok" || -z "$latest" ]]; then
     verdict="unknown"
@@ -136,34 +137,45 @@ for cid in "${CIDS[@]}"; do
     fi
   fi
 
-# erst die festen Spalten
-  printf "%-22s %-10s %-28s %-16s %-45s %-18s\n" \
-    "${name:0:22}" "${state:0:10}" "${ref:0:28}" "$status_text" "${cdir:0:45}" "${csvc:0:18}"
-# dann verdict farbig (und sauber interpretiert)
-case "$verdict" in
-  no)      printf "%b\n" "${GREEN}Aktuell${RESET}" ;;
-  update)  printf "%b\n" "${YELLOW}Update verfügbar${RESET}" ;;
-  unknown) printf "%b\n" "${GRAY}Umbekannt${RESET}" ;;
-  fail)    printf "%b\n" "${RED}Fehler${RESET}" ;;
-  *)       printf "%s\n" "$verdict" ;;
-esac
+  # farbiger Text für UPDATE?-Spalte
+  case "$verdict" in
+    no)      verdict_text="${GREEN}Aktuell${RESET}" ;;
+    update)  verdict_text="${YELLOW}Update verfügbar${RESET}" ;;
+    unknown) verdict_text="${GRAY}Unbekannt${RESET}" ;;
+    fail)    verdict_text="${RED}Fehler${RESET}" ;;
+    *)       verdict_text="$verdict" ;;
+  esac
 
+  # Tabelle: erst feste Spalten, dann farbiger verdict als letzte Spalte
+  printf "%-22s %-10s %-28s " "${name:0:22}" "${state:0:10}" "${ref:0:28}"
+  printf "%b" "${verdict_text}"
+  # Auffüllen bis zur nächsten Spalte (16 Breite) – grob reicht
+  printf "%*s" $((16 - 0)) ""
+  printf " %-45s %-18s\n" "${cdir:0:45}" "${csvc:0:18}"
 done
 
 echo
-cdir="${COMPOSE_DIR_BY_CID[$cid]}"
-csvc="${COMPOSE_SVC_BY_CID[$cid]}"
+echo "=== Containers that should be updated (recreate) ==="
+shown=0
+for cid in "${CIDS[@]}"; do
+  ref="${REF_BY_CID[$cid]}"
+  curr="${CURRID_BY_CID[$cid]}"
+  latest="${LATEST_ID[$ref]:-}"
 
-if [[ -n "$cdir" && -n "$csvc" ]]; then
-  echo "- ${NAME_BY_CID[$cid]}  (image: $ref)  -> cd \"$cdir\" && docker compose up -d $csvc"
-else
-  echo "- ${NAME_BY_CID[$cid]}  (image: $ref)  -> (kein Compose-Path/Service gefunden)"
-fi
-  shown=1
+  if [[ "${PULL_RES[$ref]:-fail}" == "ok" && -n "$latest" && "$curr" != "$latest" ]]; then
+    name="${NAME_BY_CID[$cid]}"
+    cdir="${COMPOSE_DIR_BY_CID[$cid]:-}"
+    csvc="${COMPOSE_SVC_BY_CID[$cid]:-}"
+
+    if [[ -n "$cdir" && -n "$csvc" ]]; then
+      echo "- $name  (image: $ref)  -> cd \"$cdir\" && docker compose up -d $csvc"
+    else
+      echo "- $name  (image: $ref)  -> (kein Compose-Path/Service gefunden; Container wurde evtl. ohne compose gestartet)"
+    fi
+    shown=1
+  fi
 done
 [[ $shown -eq 0 ]] && echo "Keine."
 
-echo
-echo "Summary: update needed=$updates | unknown=$unknown"
 echo
 echo "Summary: update needed=$updates | unknown=$unknown"
