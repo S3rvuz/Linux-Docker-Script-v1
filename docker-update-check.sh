@@ -98,32 +98,16 @@ for ref in "${!UNIQUE[@]}"; do
 done
 
 echo
-echo
-echo "=== Result per container ==="
-printf "%-22s %-10s %-28s %-16s %-45s %-18s\n" "NAME" "STATE" "IMAGE(ref)" "UPDATE?" "COMPOSE_DIR" "SERVICE"
-echo "-------------------------------------------------------------------------------------------------------------------------------"
+echo "=== Result per container (short table) ==="
+printf "%-22s %-9s %-28s %-16s\n" "NAME" "STATE" "IMAGE(ref)" "UPDATE?"
+echo "--------------------------------------------------------------------------"
 
-updates=0
-unknown=0
-
-RED=$'\e[31m'
-GREEN=$'\e[32m'
-YELLOW=$'\e[33m'
-GRAY=$'\e[90m'
-RESET=$'\e[0m'
-
-# Ergebnis-Tabelle
 for cid in "${CIDS[@]}"; do
   name="${NAME_BY_CID[$cid]}"
   state="${STATE_BY_CID[$cid]}"
   ref="${REF_BY_CID[$cid]}"
   curr="${CURRID_BY_CID[$cid]}"
   latest="${LATEST_ID[$ref]:-}"
-  cdir="${COMPOSE_DIR_BY_CID[$cid]:-}"
-  csvc="${COMPOSE_SVC_BY_CID[$cid]:-}"
-
-  [[ -z "$cdir" ]] && cdir="-"
-  [[ -z "$csvc" ]] && csvc="-"
 
   if [[ "${PULL_RES[$ref]:-fail}" != "ok" || -z "$latest" ]]; then
     verdict="unknown"
@@ -137,23 +121,26 @@ for cid in "${CIDS[@]}"; do
     fi
   fi
 
-  # farbiger Text für UPDATE?-Spalte
   case "$verdict" in
-    no)      verdict_text="${GREEN}Aktuell${RESET}" ;;
-    update)  verdict_text="${YELLOW}Update verfügbar${RESET}" ;;
-    unknown) verdict_text="${GRAY}Unbekannt${RESET}" ;;
-    fail)    verdict_text="${RED}Fehler${RESET}" ;;
+    no)      verdict_text="Aktuell" ;;
+    update)  verdict_text="Update verfügbar" ;;
+    unknown) verdict_text="Unbekannt" ;;
+    fail)    verdict_text="Fehler" ;;
     *)       verdict_text="$verdict" ;;
   esac
 
-  # Tabelle: erst feste Spalten, dann farbiger verdict als letzte Spalte
-  printf "%-22s %-10s %-28s " "${name:0:22}" "${state:0:10}" "${ref:0:28}"
-  printf "%b" "${verdict_text}"
-  # Auffüllen bis zur nächsten Spalte (16 Breite) – grob reicht
-  printf "%*s" $((16 - 0)) ""
-  printf " %-45s %-18s\n" "${cdir:0:45}" "${csvc:0:18}"
+  printf "%-22s %-9s %-28s %-16s\n" "${name:0:22}" "${state:0:9}" "${ref:0:28}" "${verdict_text:0:16}"
 done
-
+echo
+echo "=== Compose map (full paths) ==="
+echo "NAME -> COMPOSE_DIR | SERVICE"
+echo "--------------------------------------------------------------------------"
+for cid in "${CIDS[@]}"; do
+  cdir="${COMPOSE_DIR_BY_CID[$cid]:-}"
+  csvc="${COMPOSE_SVC_BY_CID[$cid]:-}"
+  [[ -z "$cdir" || -z "$csvc" ]] && continue
+  echo "${NAME_BY_CID[$cid]} -> $cdir | $csvc"
+done
 echo
 echo "=== Containers that should be updated (recreate) ==="
 shown=0
