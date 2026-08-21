@@ -51,6 +51,7 @@ for cid in "${CIDS[@]}"; do
   CURRID_BY_CID["$cid"]="$(docker inspect "$cid" --format '{{.Image}}')"      # current image id
   COMPOSE_DIR_BY_CID["$cid"]="$(docker inspect "$cid" --format '{{ index .Config.Labels "com.docker.compose.project.working_dir" }}' 2>/dev/null || true)"
   COMPOSE_SVC_BY_CID["$cid"]="$(docker inspect "$cid" --format '{{ index .Config.Labels "com.docker.compose.service" }}' 2>/dev/null || true)"
+  WUD_WATCH_BY_CID["$cid"]="$(docker inspect "$cid" --format '{{ index .Config.Labels "wud.watch" }}' 2>/dev/null || true)"
 done
 
 declare -A UNIQUE=()
