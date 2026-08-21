@@ -342,8 +342,13 @@ done
 echo
 echo "Summary: update needed=${YELLOW}${updates}${RESET} | ignored=${BLUE}${ignored}${RESET} | unknown=${GRAY}${unknown}${RESET}"
 echo
-echo "Zum updaten (Compose):"
-echo "  cd COMPOSE_DIR"
-echo "  docker compose pull"
-echo "  docker compose up -d"
-echo "  docker compose ps"
+echo "latest / Digest-Update:"
+echo "docker compose pull"
+echo "docker compose up -d"
+echo "docker compose ps"
+echo 
+echo "neuer Versions-Tag:"
+echo "Compose-Datei → neuen Tag eintragen"
+echo "docker compose pull NAME"
+echo "docker compose up -d NAME"
+echo "docker compose ps"
