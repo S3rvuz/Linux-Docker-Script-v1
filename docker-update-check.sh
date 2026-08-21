@@ -241,22 +241,37 @@ for cid in "${CIDS[@]}"; do
   [[ -z "$cdir" ]] && cdir="-"
   [[ -z "$csvc" ]] && csvc="-"
 
-  verdict="unknown"
+    verdict="unknown"
+  update_target=""
 
-if [[ "${WUD_WATCH_BY_CID[$cid],,}" == "false" ]]; then
-  verdict="ignored"
-  ignored=$((ignored+1))
-elif [[ "${PULL_RES[$ref]:-fail}" != "ok" || -z "$latest" ]]; then
-  verdict="unknown"
-  unknown=$((unknown+1))
-else
-  if [[ "$curr" == "$latest" ]]; then
-    verdict="no"
-  else
+  # 1. Bewusst ausgeschlossen
+  if [[ "${WUD_WATCH_BY_CID[$cid]:-}" == "false" ]]; then
+    verdict="ignored"
+    ignored=$((ignored+1))
+
+  # 2. WUD kennt ein echtes Versionsupdate
+  elif [[ "${WUD_PRESENT_BY_NAME[$name]:-0}" == "1" &&
+          "${WUD_UPDATE_BY_NAME[$name]:-unknown}" == "true" ]]; then
+
     verdict="update"
+    update_target="${WUD_TARGET_BY_NAME[$name]:-}"
     updates=$((updates+1))
+
+  # 3. docker pull konnte nicht geprüft werden
+  elif [[ "${PULL_RES[$ref]:-fail}" != "ok" || -z "$latest" ]]; then
+    verdict="unknown"
+    unknown=$((unknown+1))
+
+  # 4. Gleicher Tag, aber neues Image dahinter
+  elif [[ "$curr" != "$latest" ]]; then
+    verdict="update"
+    update_target="neuer Digest"
+    updates=$((updates+1))
+
+  # 5. Wirklich aktuell
+  else
+    verdict="no"
   fi
-fi
 
   # verdict text + color
   case "$verdict" in
