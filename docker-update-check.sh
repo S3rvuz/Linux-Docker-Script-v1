@@ -163,6 +163,7 @@ fi
   case "$verdict" in
     no)      verdict_text="${GREEN}Aktuell${RESET}" ;;
     update)  verdict_text="${YELLOW}Update${RESET}" ;;
+    ignored) verdict_text="${BLUE}Ignoriert${RESET}" ;;
     unknown) verdict_text="${GRAY}Unbekannt${RESET}" ;;
     *)       verdict_text="$verdict" ;;
   esac
