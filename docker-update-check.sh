@@ -143,17 +143,21 @@ for cid in "${CIDS[@]}"; do
   [[ -z "$csvc" ]] && csvc="-"
 
   verdict="unknown"
-  if [[ "${PULL_RES[$ref]:-fail}" != "ok" || -z "$latest" ]]; then
-    verdict="unknown"
-    unknown=$((unknown+1))
+
+if [[ "${WUD_WATCH_BY_CID[$cid],,}" == "false" ]]; then
+  verdict="ignored"
+  ignored=$((ignored+1))
+elif [[ "${PULL_RES[$ref]:-fail}" != "ok" || -z "$latest" ]]; then
+  verdict="unknown"
+  unknown=$((unknown+1))
+else
+  if [[ "$curr" == "$latest" ]]; then
+    verdict="no"
   else
-    if [[ "$curr" == "$latest" ]]; then
-      verdict="no"
-    else
-      verdict="update"
-      updates=$((updates+1))
-    fi
+    verdict="update"
+    updates=$((updates+1))
   fi
+fi
 
   # verdict text + color
   case "$verdict" in
