@@ -180,6 +180,9 @@ echo
 echo "=== Containers that should be updated (recreate) ==="
 shown=0
 for cid in "${CIDS[@]}"; do
+  if [[ "${WUD_WATCH_BY_CID[$cid],,}" == "false" ]]; then
+    continue
+  fi
   ref="${REF_BY_CID[$cid]}"
   curr="${CURRID_BY_CID[$cid]}"
   latest="${LATEST_ID[$ref]:-}"
