@@ -216,7 +216,7 @@ COLS="$(tput cols 2>/dev/null || echo 148)"
 W_NAME=20
 W_STATE=8
 W_IMAGE=30
-W_UPD=16
+W_UPD=34
 W_SVC=12
 W_PATH=$(( COLS - (W_NAME + 1) - (W_STATE + 1) - (W_IMAGE + 1) - (W_UPD + 1) - (W_SVC + 1) ))
 (( W_PATH < 30 )) && W_PATH=30
@@ -274,12 +274,30 @@ for cid in "${CIDS[@]}"; do
   fi
 
   # verdict text + color
-  case "$verdict" in
-    no)      verdict_text="${GREEN}Aktuell${RESET}" ;;
-    update)  verdict_text="${YELLOW}Update${RESET}" ;;
-    ignored) verdict_text="${BLUE}Ignoriert${RESET}" ;;
-    unknown) verdict_text="${GRAY}Unbekannt${RESET}" ;;
-    *)       verdict_text="$verdict" ;;
+    case "$verdict" in
+    no)
+      verdict_text="${GREEN}Aktuell${RESET}"
+      ;;
+
+    update)
+      if [[ -n "$update_target" ]]; then
+        verdict_text="${YELLOW}Update -> $update_target${RESET}"
+      else
+        verdict_text="${YELLOW}Update${RESET}"
+      fi
+      ;;
+
+    ignored)
+      verdict_text="${BLUE}Ignoriert${RESET}"
+      ;;
+
+    unknown)
+      verdict_text="${GRAY}Unbekannt${RESET}"
+      ;;
+
+    *)
+      verdict_text="$verdict"
+      ;;
   esac
 
   # IMPORTANT: verdict field must NOT be truncated with .W_UPD because it contains ANSI codes
