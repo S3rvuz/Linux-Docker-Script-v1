@@ -203,7 +203,7 @@ done
 [[ $shown -eq 0 ]] && echo "Keine."
 
 echo
-echo "Summary: update needed=${YELLOW}${updates}${RESET} | unknown=${GRAY}${unknown}${RESET}"
+echo "Summary: update needed=${YELLOW}${updates}${RESET} | ignored=${BLUE}${ignored}${RESET} | unknown=${GRAY}${unknown}${RESET}"
 echo
 echo "Zum updaten (Compose):"
 echo "  cd COMPOSE_DIR"
