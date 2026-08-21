@@ -42,6 +42,7 @@ declare -A STATE_BY_CID=()
 declare -A CURRID_BY_CID=()
 declare -A COMPOSE_DIR_BY_CID=()
 declare -A COMPOSE_SVC_BY_CID=()
+declare -A WUD_WATCH_BY_CID=()
 
 for cid in "${CIDS[@]}"; do
   NAME_BY_CID["$cid"]="$(docker inspect "$cid" --format '{{.Name}}' | sed 's#^/##')"
