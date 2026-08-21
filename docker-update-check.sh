@@ -216,7 +216,7 @@ COLS="$(tput cols 2>/dev/null || echo 148)"
 W_NAME=20
 W_STATE=8
 W_IMAGE=30
-W_UPD=34
+W_UPD=40
 W_SVC=12
 W_PATH=$(( COLS - (W_NAME + 1) - (W_STATE + 1) - (W_IMAGE + 1) - (W_UPD + 1) - (W_SVC + 1) ))
 (( W_PATH < 30 )) && W_PATH=30
@@ -276,34 +276,39 @@ for cid in "${CIDS[@]}"; do
   # verdict text + color
     case "$verdict" in
     no)
-      verdict_text="${GREEN}Aktuell${RESET}"
+      verdict_plain="Aktuell"
+      verdict_color="$GREEN"
       ;;
 
     update)
       if [[ -n "$update_target" ]]; then
-        verdict_text="${YELLOW}Update -> $update_target${RESET}"
+        verdict_plain="Update -> $update_target"
       else
-        verdict_text="${YELLOW}Update${RESET}"
+        verdict_plain="Update"
       fi
+      verdict_color="$YELLOW"
       ;;
 
     ignored)
-      verdict_text="${BLUE}Ignoriert${RESET}"
+      verdict_plain="Ignoriert"
+      verdict_color="$BLUE"
       ;;
 
     unknown)
-      verdict_text="${GRAY}Unbekannt${RESET}"
+      verdict_plain="Unbekannt"
+      verdict_color="$GRAY"
       ;;
 
     *)
-      verdict_text="$verdict"
+      verdict_plain="$verdict"
+      verdict_color=""
       ;;
   esac
 
   # IMPORTANT: verdict field must NOT be truncated with .W_UPD because it contains ANSI codes
   printf "%-${W_NAME}.${W_NAME}s %-${W_STATE}.${W_STATE}s %-${W_IMAGE}.${W_IMAGE}s " \
     "$name" "$state" "$ref"
-  printf "%-${W_UPD}s " "$verdict_text"
+  printf "%b%-*s%b " "$verdict_color" "$W_UPD" "$verdict_plain" "$RESET"
   printf "%-${W_PATH}.${W_PATH}s %-${W_SVC}.${W_SVC}s\n" \
     "$cdir" "$csvc"
 done
