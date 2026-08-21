@@ -2,6 +2,7 @@
 set -euo pipefail
 
 PULL_TIMEOUT="${PULL_TIMEOUT:-120s}"
+WUD_URL="${WUD_URL:-http://127.0.0.1:3002/api/containers}"
 
 need(){ command -v "$1" >/dev/null 2>&1 || { echo "Fehlt: $1" >&2; exit 1; }; }
 need docker
