@@ -128,6 +128,7 @@ printf "%*s\n" "$COLS" "" | tr ' ' '-'
 
 updates=0
 unknown=0
+ignored=0
 
 for cid in "${CIDS[@]}"; do
   name="${NAME_BY_CID[$cid]}"
