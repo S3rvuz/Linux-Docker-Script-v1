@@ -54,12 +54,22 @@ for cid in "${CIDS[@]}"; do
   WUD_WATCH_BY_CID["$cid"]="$(docker inspect "$cid" --format '{{ index .Config.Labels "wud.watch" }}' 2>/dev/null || true)"
 done
 
+declare -A UNIQUE_ALL=()
 declare -A UNIQUE=()
+
 for cid in "${CIDS[@]}"; do
-  UNIQUE["${REF_BY_CID[$cid]}"]=1
+  ref="${REF_BY_CID[$cid]}"
+  UNIQUE_ALL["$ref"]=1
+
+  # Container mit wud.watch=false nicht gegen Registry prüfen
+  if [[ "${WUD_WATCH_BY_CID[$cid],,}" == "false" ]]; then
+    continue
+  fi
+
+  UNIQUE["$ref"]=1
 done
 
-echo "Containers: ${#CIDS[@]} | Unique image refs: ${#UNIQUE[@]}"
+echo "Containers: ${#CIDS[@]} | Unique image refs: ${#UNIQUE_ALL[@]} | Pull checks: ${#UNIQUE[@]}"
 echo
 
 declare -A LATEST_ID=()
