@@ -57,6 +57,102 @@ for cid in "${CIDS[@]}"; do
   WUD_WATCH_BY_CID["$cid"]="$(docker inspect "$cid" --format '{{ index .Config.Labels "wud.watch" }}' 2>/dev/null || true)"
 done
 
+# ------------------------------------------------------------
+# WUD Update-Informationen laden
+# ------------------------------------------------------------
+
+declare -A WUD_PRESENT_BY_NAME=()
+declare -A WUD_UPDATE_BY_NAME=()
+declare -A WUD_KIND_BY_NAME=()
+declare -A WUD_LOCAL_BY_NAME=()
+declare -A WUD_TARGET_BY_NAME=()
+
+WUD_OK=0
+
+if WUD_TSV="$(
+  curl -fsS --max-time 10 "$WUD_URL" |
+  python3 -c '
+import json
+import sys
+
+data = json.load(sys.stdin)
+
+for c in data:
+    name = c.get("name")
+    if not name:
+        continue
+
+    available = c.get("updateAvailable")
+
+    if available is True:
+        state = "true"
+    elif available is False:
+        state = "false"
+    else:
+        state = "unknown"
+
+    kind_data = c.get("updateKind") or {}
+    result = c.get("result") or {}
+    image = c.get("image") or {}
+    tag = image.get("tag") or {}
+
+    kind = kind_data.get("kind") or "-"
+    local = kind_data.get("localValue") or tag.get("value") or "-"
+
+    if available is True:
+        if kind == "tag":
+            target = (
+                result.get("tag")
+                or kind_data.get("remoteValue")
+                or "-"
+            )
+
+        elif kind == "digest":
+            digest = (
+                result.get("digest")
+                or kind_data.get("remoteValue")
+            )
+
+            if digest:
+                target = "Digest " + digest.replace("sha256:", "")[:12]
+            else:
+                target = "neuer Digest"
+
+        else:
+            target = (
+                result.get("tag")
+                or kind_data.get("remoteValue")
+                or result.get("digest")
+                or "Update"
+            )
+    else:
+        target = "-"
+
+    print(
+        f"{name}\t{state}\t{kind}\t{local}\t{target}"
+    )
+'
+)"; then
+
+  WUD_OK=1
+
+  while IFS=$'\t' read -r name state kind local target; do
+    [[ -z "$name" ]] && continue
+
+    WUD_PRESENT_BY_NAME["$name"]=1
+    WUD_UPDATE_BY_NAME["$name"]="$state"
+    WUD_KIND_BY_NAME["$name"]="$kind"
+    WUD_LOCAL_BY_NAME["$name"]="$local"
+    WUD_TARGET_BY_NAME["$name"]="$target"
+  done <<< "$WUD_TSV"
+
+  echo "${GREEN}WUD API erreichbar${RESET}"
+else
+  echo "${YELLOW}WARNUNG: WUD API nicht erreichbar – Versionsprüfung eingeschränkt.${RESET}"
+fi
+
+echo
+
 declare -A UNIQUE_ALL=()
 declare -A UNIQUE=()
 
