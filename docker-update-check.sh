@@ -7,6 +7,8 @@ WUD_URL="${WUD_URL:-http://127.0.0.1:3002/api/containers}"
 need(){ command -v "$1" >/dev/null 2>&1 || { echo "Fehlt: $1" >&2; exit 1; }; }
 need docker
 need timeout
+need curl
+need python3
 
 # Colors (tput, fallback empty if not a tty)
 if [[ -t 1 ]]; then
