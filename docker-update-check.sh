@@ -15,6 +15,36 @@ need timeout
 need curl
 need python3
 
+fetch_wud() {
+  local output="$1"
+
+  # Basic Auth, wenn Benutzer + Passwort gesetzt sind
+  if [[ -n "$WUD_USER" && -n "$WUD_PASSWORD" ]]; then
+    curl -fsS \
+      --max-time 10 \
+      -u "$WUD_USER:$WUD_PASSWORD" \
+      "$WUD_URL" \
+      -o "$output"
+    return
+  fi
+
+  # Token, falls gesetzt
+  if [[ -n "$WUD_TOKEN" ]]; then
+    curl -fsS \
+      --max-time 10 \
+      -H "Authorization: Bearer $WUD_TOKEN" \
+      "$WUD_URL" \
+      -o "$output"
+    return
+  fi
+
+  # Ohne Auth versuchen
+  curl -fsS \
+    --max-time 10 \
+    "$WUD_URL" \
+    -o "$output"
+}
+
 # Colors (tput, fallback empty if not a tty)
 if [[ -t 1 ]]; then
   RED="$(tput setaf 1)"; GREEN="$(tput setaf 2)"; YELLOW="$(tput setaf 3)"
