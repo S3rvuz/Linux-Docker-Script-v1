@@ -69,14 +69,17 @@ declare -A WUD_LOCAL_BY_NAME=()
 declare -A WUD_TARGET_BY_NAME=()
 
 WUD_OK=0
+WUD_JSON="$(mktemp)"
 
-if WUD_TSV="$(
-  curl -fsS --max-time 10 "$WUD_URL" |
-  python3 -c '
+if curl -fsS --max-time 10 "$WUD_URL" -o "$WUD_JSON"; then
+
+  if WUD_TSV="$(
+    python3 -c '
 import json
 import sys
 
-data = json.load(sys.stdin)
+with open(sys.argv[1], "r") as f:
+    data = json.load(f)
 
 for c in data:
     name = c.get("name")
@@ -129,28 +132,33 @@ for c in data:
     else:
         target = "-"
 
-    print(
-        f"{name}\t{state}\t{kind}\t{local}\t{target}"
-    )
-'
-)"; then
+    print(f"{name}\t{state}\t{kind}\t{local}\t{target}")
+' "$WUD_JSON"
+  )"; then
 
-  WUD_OK=1
+    WUD_OK=1
 
-  while IFS=$'\t' read -r name state kind local target; do
-    [[ -z "$name" ]] && continue
+    while IFS=$'\t' read -r name state kind local target; do
+      [[ -z "$name" ]] && continue
 
-    WUD_PRESENT_BY_NAME["$name"]=1
-    WUD_UPDATE_BY_NAME["$name"]="$state"
-    WUD_KIND_BY_NAME["$name"]="$kind"
-    WUD_LOCAL_BY_NAME["$name"]="$local"
-    WUD_TARGET_BY_NAME["$name"]="$target"
-  done <<< "$WUD_TSV"
+      WUD_PRESENT_BY_NAME["$name"]=1
+      WUD_UPDATE_BY_NAME["$name"]="$state"
+      WUD_KIND_BY_NAME["$name"]="$kind"
+      WUD_LOCAL_BY_NAME["$name"]="$local"
+      WUD_TARGET_BY_NAME["$name"]="$target"
+    done <<< "$WUD_TSV"
 
-  echo "${GREEN}WUD API erreichbar${RESET}"
+    echo "${GREEN}WUD API erreichbar${RESET}"
+
+  else
+    echo "${YELLOW}WARNUNG: WUD-Antwort konnte nicht verarbeitet werden.${RESET}"
+  fi
+
 else
-  echo "${YELLOW}WARNUNG: WUD API nicht erreichbar – Versionsprüfung eingeschränkt.${RESET}"
+  echo "${YELLOW}WARNUNG: WUD API nicht erreichbar oder Authentifizierung fehlgeschlagen.${RESET}"
 fi
+
+rm -f "$WUD_JSON"
 
 echo
 
