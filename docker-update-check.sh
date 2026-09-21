@@ -3,7 +3,7 @@ set -euo pipefail
 
 PULL_TIMEOUT="${PULL_TIMEOUT:-120s}"
 
-WUD_URL="${WUD_URL:-http://127.0.0.1:3002/api/containers}"
+WUD_URL="${WUD_URL:-http://172.0.0.1/api/containers}"
 
 WUD_USER="${WUD_USER:-}"
 WUD_PASSWORD="${WUD_PASSWORD:-}"
