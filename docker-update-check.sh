@@ -69,9 +69,97 @@ declare -A WUD_TARGET_BY_NAME=()
 
 WUD_OK=0
 
-if WUD_TSV="$(
-  curl -fsS --max-time 10 "$WUD_URL" |
-  python3 -c '
+WUD_JSON="$(mktemp)"
+
+if curl -fsS --max-time 10 "$WUD_URL" -o "$WUD_JSON"; then
+
+  if WUD_TSV="$(
+    python3 -c '
+import json
+import sys
+
+with open(sys.argv[1], "r") as f:
+    data = json.load(f)
+
+for c in data:
+    name = c.get("name")
+    if not name:
+        continue
+
+    available = c.get("updateAvailable")
+
+    if available is True:
+        state = "true"
+    elif available is False:
+        state = "false"
+    else:
+        state = "unknown"
+
+    kind_data = c.get("updateKind") or {}
+    result = c.get("result") or {}
+    image = c.get("image") or {}
+    tag = image.get("tag") or {}
+
+    kind = kind_data.get("kind") or "-"
+    local = kind_data.get("localValue") or tag.get("value") or "-"
+
+    if available is True:
+        if kind == "tag":
+            target = (
+                result.get("tag")
+                or kind_data.get("remoteValue")
+                or "-"
+            )
+
+        elif kind == "digest":
+            digest = (
+                result.get("digest")
+                or kind_data.get("remoteValue")
+            )
+
+            if digest:
+                target = "Digest " + digest.replace("sha256:", "")[:12]
+            else:
+                target = "neuer Digest"
+
+        else:
+            target = (
+                result.get("tag")
+                or kind_data.get("remoteValue")
+                or result.get("digest")
+                or "Update"
+            )
+    else:
+        target = "-"
+
+    print(
+        f"{name}\t{state}\t{kind}\t{local}\t{target}"
+    )
+' "$WUD_JSON"
+  )"; then
+
+    WUD_OK=1
+
+    while IFS=$'\t' read -r name state kind local target; do
+      [[ -z "$name" ]] && continue
+
+      WUD_PRESENT_BY_NAME["$name"]=1
+      WUD_UPDATE_BY_NAME["$name"]="$state"
+      WUD_KIND_BY_NAME["$name"]="$kind"
+      WUD_LOCAL_BY_NAME["$name"]="$local"
+      WUD_TARGET_BY_NAME["$name"]="$target"
+    done <<< "$WUD_TSV"
+
+    echo "${GREEN}WUD API erreichbar${RESET}"
+  else
+    echo "${YELLOW}WARNUNG: WUD-Antwort konnte nicht verarbeitet werden.${RESET}"
+  fi
+
+else
+  echo "${YELLOW}WARNUNG: WUD API nicht erreichbar oder Authentifizierung fehlgeschlagen.${RESET}"
+fi
+
+rm -f "$WUD_JSON"
 import json
 import sys
 
