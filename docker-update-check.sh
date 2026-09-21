@@ -2,7 +2,11 @@
 set -euo pipefail
 
 PULL_TIMEOUT="${PULL_TIMEOUT:-120s}"
+
 WUD_URL="${WUD_URL:-http://127.0.0.1:3002/api/containers}"
+
+WUD_USER="${WUD_USER:-}"
+WUD_PASSWORD="${WUD_PASSWORD:-}"
 WUD_TOKEN="${WUD_TOKEN:-}"
 
 need(){ command -v "$1" >/dev/null 2>&1 || { echo "Fehlt: $1" >&2; exit 1; }; }
@@ -71,7 +75,7 @@ declare -A WUD_TARGET_BY_NAME=()
 WUD_OK=0
 WUD_JSON="$(mktemp)"
 
-if curl -fsS --max-time 10 "$WUD_URL" -o "$WUD_JSON"; then
+if fetch_wud "$WUD_JSON"; then
 
   if WUD_TSV="$(
     python3 -c '
