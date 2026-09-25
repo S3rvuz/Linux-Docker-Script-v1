@@ -1,9 +1,15 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+WUD_ENV_FILE="${WUD_ENV_FILE:-$HOME/.wud-env}"
+
+if [[ -f "$WUD_ENV_FILE" ]]; then
+    source "$WUD_ENV_FILE"
+fi
+
 PULL_TIMEOUT="${PULL_TIMEOUT:-120s}"
 
-WUD_URL="${WUD_URL:-http://172.0.0.1/api/containers}"
+WUD_URL="${WUD_URL:-http://127.0.0.1:3002/api/containers}"
 
 WUD_USER="${WUD_USER:-}"
 WUD_PASSWORD="${WUD_PASSWORD:-}"
