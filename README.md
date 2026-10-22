@@ -47,4 +47,4 @@ The script contains a default WUD URL, but values defined in `~/.wud-env` overri
 You need for a local start 
 ```bash 
 sudo install -m 755 docker-update-check.sh /usr/local/bin/docker-update-check
-´´´
+```
