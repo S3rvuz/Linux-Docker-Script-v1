@@ -3,14 +3,20 @@ set -euo pipefail
 
 WUD_ENV_FILE="${WUD_ENV_FILE:-}"
 
-if [[ -z "$WUD_ENV_FILE" ]]; then
-    if [[ -f "./.wud-env" ]]; then
-        WUD_ENV_FILE="./.wud-env"
-    elif [[ -n "${SUDO_USER:-}" && -f "/home/$SUDO_USER/.wud-env" ]]; then
-        WUD_ENV_FILE="/home/$SUDO_USER/.wud-env"
-    elif [[ -f "$HOME/.wud-env" ]]; then
-        WUD_ENV_FILE="$HOME/.wud-env"
+if [[ -z "$WUD_ENV_FILE" && -f "./.wud-env" ]]; then
+    WUD_ENV_FILE="./.wud-env"
+fi
+
+if [[ -z "$WUD_ENV_FILE" && -n "${SUDO_USER:-}" ]]; then
+    SUDO_HOME="$(getent passwd "$SUDO_USER" | cut -d: -f6)"
+
+    if [[ -n "$SUDO_HOME" && -f "$SUDO_HOME/.wud-env" ]]; then
+        WUD_ENV_FILE="$SUDO_HOME/.wud-env"
     fi
+fi
+
+if [[ -z "$WUD_ENV_FILE" && -f "$HOME/.wud-env" ]]; then
+    WUD_ENV_FILE="$HOME/.wud-env"
 fi
 
 if [[ -n "$WUD_ENV_FILE" && -f "$WUD_ENV_FILE" ]]; then
