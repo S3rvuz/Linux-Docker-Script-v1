@@ -25,7 +25,7 @@ fetch_wud() {
   local output="$1"
 
   # Basic Auth, wenn Benutzer + Passwort gesetzt sind
-  if [[ -n "$WUD_USER" && -n "$WUD_PASSWORD" ]]; then
+  if [[ -n "$WUD_USER" && -n "$WUD_PASSWORD" ]]; then #test
     curl -fsS \
       --max-time 10 \
       -u "$WUD_USER:$WUD_PASSWORD" \
