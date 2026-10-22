@@ -1,9 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-WUD_ENV_FILE="${WUD_ENV_FILE:-$HOME/.wud-env}"
+WUD_ENV_FILE="${WUD_ENV_FILE:-}"
 
-if [[ -f "$WUD_ENV_FILE" ]]; then
+if [[ -z "$WUD_ENV_FILE" ]]; then
+    if [[ -f "./.wud-env" ]]; then
+        WUD_ENV_FILE="./.wud-env"
+    elif [[ -n "${SUDO_USER:-}" && -f "/home/$SUDO_USER/.wud-env" ]]; then
+        WUD_ENV_FILE="/home/$SUDO_USER/.wud-env"
+    elif [[ -f "$HOME/.wud-env" ]]; then
+        WUD_ENV_FILE="$HOME/.wud-env"
+    fi
+fi
+
+if [[ -n "$WUD_ENV_FILE" && -f "$WUD_ENV_FILE" ]]; then
     source "$WUD_ENV_FILE"
 fi
 
@@ -85,7 +95,7 @@ fetch_wud() {
   local output="$1"
 
   # Basic Auth, wenn Benutzer + Passwort gesetzt sind
-  if [[ -n "$WUD_USER" && -n "$WUD_PASSWORD" ]]; then #test
+  if [[ -n "$WUD_USER" && -n "$WUD_PASSWORD" ]]; then 
     curl -fsS \
       --max-time 10 \
       -u "$WUD_USER:$WUD_PASSWORD" \
