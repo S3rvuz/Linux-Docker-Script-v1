@@ -149,7 +149,7 @@ spinner() {
   done
 }
 
-echo "=== Docker Update Check ==="
+echo "=== DUCK - Docker Update Check ==="
 echo "Timeout per pull: $PULL_TIMEOUT"
 echo
 
