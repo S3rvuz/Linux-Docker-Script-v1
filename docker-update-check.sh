@@ -149,7 +149,7 @@ spinner() {
   done
 }
 
-echo "=== DUCK - Docker Update Check ==="
+echo "=== DUCK - Docker Update Check 🦆 ==="
 echo "Timeout per pull: $PULL_TIMEOUT"
 echo
 
@@ -321,7 +321,7 @@ for ref in "${!UNIQUE[@]}"; do
     if grep -qi "Downloaded newer image" "$tmp_out"; then
       echo "($idx/$total) $ref  -> ${GREEN}ok${RESET} (newer downloaded)"
     else
-      echo "($idx/$total) $ref  -> ${GREEN}ok${RESET}"
+      echo "($idx/$total) $ref  -> ${GREEN}✔️${RESET}"
     fi
   else
     PULL_RES["$ref"]="fail"
