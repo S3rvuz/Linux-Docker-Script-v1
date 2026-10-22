@@ -44,4 +44,7 @@ If `.wud-env` is stored inside a Git repository, add it to `.gitignore`:
 
 The script contains a default WUD URL, but values defined in `~/.wud-env` override the defaults automatically.
 
-You need for a local start ```bash sudo install -m 755 docker-update-check.sh /usr/local/bin/docker-update-check´´´
+You need for a local start 
+```bash 
+sudo install -m 755 docker-update-check.sh /usr/local/bin/docker-update-check
+´´´
