@@ -9,7 +9,67 @@ fi
 
 PULL_TIMEOUT="${PULL_TIMEOUT:-120s}"
 
-WUD_URL="${WUD_URL:-http://127.0.0.1:3002/api/containers}"
+# WUD_URL kann über ~/.wud-env oder Umgebungsvariable fest vorgegeben werden.
+# Wenn sie nicht gesetzt ist, wird versucht, WUD automatisch zu erkennen.
+WUD_URL="${WUD_URL:-}"
+
+detect_wud_url() {
+    local container=""
+    local binding=""
+    local host_ip=""
+    local host_port=""
+
+    # WUD-Container suchen
+    container="$(docker ps \
+        --filter "ancestor=getwud/wud" \
+        --format '{{.ID}}' \
+        | head -n 1)"
+
+    # Fallback über Containername
+    if [[ -z "$container" ]]; then
+        container="$(docker ps \
+            --filter "name=^/wud$" \
+            --format '{{.ID}}' \
+            | head -n 1)"
+    fi
+
+    if [[ -z "$container" ]]; then
+        return 1
+    fi
+
+    # Published Binding des internen WUD-Ports 3000 ermitteln
+    binding="$(docker inspect "$container" \
+        --format '{{with (index .NetworkSettings.Ports "3000/tcp")}}{{(index . 0).HostIp}}:{{(index . 0).HostPort}}{{end}}' \
+        2>/dev/null || true)"
+
+    if [[ -z "$binding" || "$binding" == ":" ]]; then
+        return 1
+    fi
+
+    host_ip="${binding%:*}"
+    host_port="${binding##*:}"
+
+    # 0.0.0.0 / IPv6-Wildcard bedeutet:
+    # Der Dienst ist auch über localhost erreichbar.
+    case "$host_ip" in
+        "0.0.0.0"|"::"|"")
+            host_ip="127.0.0.1"
+            ;;
+    esac
+
+    printf 'http://%s:%s/api/containers\n' "$host_ip" "$host_port"
+}
+
+if [[ -z "$WUD_URL" ]]; then
+    if detected_wud_url="$(detect_wud_url)"; then
+        WUD_URL="$detected_wud_url"
+    else
+        # Kompatibilitäts-Fallback
+        WUD_URL="http://127.0.0.1:3002/api/containers"
+    fi
+fi
+
+echo "WUD API: $WUD_URL"
 
 WUD_USER="${WUD_USER:-}"
 WUD_PASSWORD="${WUD_PASSWORD:-}"
